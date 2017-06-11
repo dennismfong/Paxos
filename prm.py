@@ -119,10 +119,10 @@ def checkStream():
                 if "accept" in ballot:
                     # accept,ballotNum.num,ballotNum.ID,myTempVal
                     acceptKey = ballotArgs[1] + "." + ballotArgs[2]
+                    incomingBal = [int(ballotArgs[1]), int(ballotArgs[2])]
+                    incomingAcceptVal = ballotArgs[3]
                     if acceptKey not in NUMACCEPTS:
                         NUMACCEPTS[acceptKey] = 1 
-                        incomingBal = [int(ballotArgs[1]), int(ballotArgs[2])]
-                        incomingAcceptVal = ballotArgs[3]
                         if firstGreater(incomingBal, BALLOTNUM):
                             ACCEPTNUM[0] = incomingBal[0]
                             ACCEPTNUM[1] = incomingBal[1]
@@ -130,7 +130,11 @@ def checkStream():
                             cohortAccept(incomingBal, incomingAcceptVal)
                     elif NUMACCEPTS[acceptKey] == 1:
                         NUMACCEPTS[acceptKey] += 1
-                        decide()
+                        if firstGreater(incomingBal, BALLOTNUM):
+                            ACCEPTNUM[0] = incomingBal[0]
+                            ACCEPTNUM[1] = incomingBal[1]
+                            ACCEPTVAL = incomingAcceptVal
+                            decide()
                 if "decide" in ballot:
                     # decide,fileNameToReplicate
                     stringToLog(ballotArgs[1])

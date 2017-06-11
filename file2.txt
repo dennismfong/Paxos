@@ -1,4 +1,4 @@
-filetxt2.txt
+file2.txt
 bang 6
 this 2
 watermelon 6
