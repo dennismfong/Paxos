@@ -194,36 +194,40 @@ def decide():
                                
 # PRM FUNCTIONS #
 def merge(pos1, pos2):
-    p1_dict = THELOG[pos1]['words']          #LINE FORMAT: [word] [count]
-    p2_dict = THELOG[pos2]['words']
+    
+    p1_dict = THELOG[int(pos1)]['words']          #LINE FORMAT: [word] [count]
+    print p1_dict
+    p2_dict = THELOG[int(pos2)]['words']
+    print p2_dict
     output = {}
     for word in p1_dict:
         if word not in output:   #NEW INSTANCE OF WORD
             output[word] = p1_dict[word]
         else:                       #WORD ALREADY EXISTS
-            output[word] = output[word] + p1_dict[word]
+            output[word] += p1_dict[word]
     for word in p2_dict:
         if word not in output:   #NEW INSTANCE OF WORD
             output[word] = p2_dict[word]
         else:                       #WORD ALREADY EXISTS
-            output[word] = output[word] + p2_dict[word]
-    for index in output:
-        print index + ': ' + str(output[index])
+            output[word] +=  p2_dict[word]
+    for words in output:
+        print words + ': ' + str(output[words])
 
 def total(args):
     arglist = args.split(",")
+    print arglist
     total_count = 0
-    itera = 0
+    itera = -1
     pos_dicts = {}
     for pos in arglist:
-        if itera == 0:
+        if itera == -1:
             itera = itera + 1
         else:
-            pos_dicts[pos] = THELOG[pos]['words']
+            pos_dicts[pos] = THELOG[int(pos)]['words']
     for posdict in pos_dicts:
             for word in pos_dicts[posdict]:
-                total_count = total_count + pos_dicts[posdict][word]
-    return total_count
+                total_count += pos_dicts[posdict][word]
+    print total_count
 
 def print_log():
     for index in THELOG:

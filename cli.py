@@ -20,25 +20,25 @@ port_nums = [5001, 5002, 5003, 5004]
 port_nums[3] = int(sys.argv[1])
 
 def setup():
-#    while True:
-#        try:
-#            ports[0].connect((MYID, 5001)) 
-#            break
-#        except Exception:
-#            pass
-#    while True:
-#        try:
-#            ports[1].connect((MYID, 5002))
-#            break
-#        except Exception:
-#            pass
-#    while True:
-#        try:
-#            ports[2].connect((MYID, 5003))
-#            break
-#        except Exception:
-#           pass
-    while True:
+    while True: #mapper1
+        try:
+            ports[0].connect((MYID, 5001)) 
+            break
+        except Exception:
+            pass
+    while True: #mapper2
+        try:
+            ports[1].connect((MYID, 5002))
+            break
+        except Exception:
+            pass
+    while True: #reducer
+        try:
+            ports[2].connect((MYID, 5003))
+            break
+        except Exception:
+           pass
+    while True: #prm
         try:
             ports[3].connect((MYID, port_nums[3]))
             break
@@ -51,17 +51,46 @@ def cli_main():
         if(len(command) == 0):
             continue
         arg = command.split()
-        message = arg[0]
+        message = arg[0] 
         if (arg[0] == 'map'):
-            #process_map(arg[1])
+            message = message + ',' +  arg[1]
+            f = open(arg[1], 'r') 
+            for i, l in enumerate(f):
+                pass
+            f_size = i + 1
+            print f_size
+            f_split = f_size/2
+            f.seek(f_split)
+            while True: 
+                if(f.read(1) == " "):
+                    message1 = message + ',0,' + str(f_split)
+                    message2 = message + ',' + str(f_split) + ',' + str(f_size) + ' ' 
+                    while True:
+                        try:    #SEND TO LOCAL MAPPERS
+                            ports[0].sendall(message1)
+                            ports[1].sendall(message2)
+                            break
+                        except:
+                            pass
+                    break
+                else:
+                    f_split += 1
             print "Mapping " + arg[1]
+            continue
         elif (arg[0] == 'reduce'):
             for i in range(1, len(arg)):
                 if(i < len(arg) - 1):
-                    message = message + arg[i] + ','
+                    message = message + ',' + arg[i] + ','
                 else:
                     message = message + arg[i] + " "
+            while True:
+                try:
+                    ports[2].sendall(message)
+                    break
+                except:
+                    pass
             print "Reducing!"
+            continue
             #process_reduce(message)
         elif (arg[0] == 'replicate'):
             message = message + ',' + arg[1] + " "
@@ -73,11 +102,12 @@ def cli_main():
             print "Resuming PRM"
             pass
         elif (arg[0] == 'total'):
+            message += ','
             for i in range(1, len(arg)):
                 if(i < len(arg) - 1):
                     message = message + arg[i] + ','
                 else:
-                    message = message + arg[i] + " "   
+                    message = message + arg[i]   
             print "Totaling!"
         elif (arg[0] == 'print'):
             pass

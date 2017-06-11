@@ -4,19 +4,22 @@ import socket
 
 file_tag = '_I_1.txt'
 LOCALHOST = '127.0.0.1'
-PORT = int(sys.argv[1])
+#PORT = int(sys.argv[1])
+PORT = 5001
 
 servsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 servsock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 servsock.bind((LOCALHOST, PORT))
 servsock.listen(1)
 stream, addr = servsock.accept()
-mapper1()
 
 def mapper1():
+    global stream
     while True:
         try:
+            print "Waiting for file to map"
             data = stream.recv(1024)
+            print data
             streamData = data.split()
             for mapData in streamData:
                 mapArgs = mapData.split(',')
@@ -35,7 +38,7 @@ def mapper1():
                     f2.write(word + ' ' + str(w_dict[word]) + '\n')
                 f2.close()
                 f.close()
-            break
+
         except KeyboardInterrupt:
             break
 
