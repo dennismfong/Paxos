@@ -5,6 +5,7 @@
 ##CLI IMPLEMENTATION
 
 import socket
+import sys
 
 MYID = '127.0.0.1'
 
@@ -16,6 +17,7 @@ for i in range(4):
     ##ports[0] = reducer
     ##ports[1] = prm/replicator
 port_nums = [5001, 5002, 5003, 5004]
+port_nums[3] = int(sys.argv[1])
 
 def setup():
 #    while True:
@@ -38,7 +40,7 @@ def setup():
 #           pass
     while True:
         try:
-            ports[3].connect((MYID, 5004))
+            ports[3].connect((MYID, port_nums[3]))
             break
         except Exception:
             pass
@@ -46,6 +48,8 @@ def setup():
 def cli_main():
     while True:
         command = raw_input("Enter command: \n")
+        if(len(command) == 0):
+            continue
         arg = command.split()
         message = arg[0]
         if (arg[0] == 'map'):
@@ -61,7 +65,6 @@ def cli_main():
             #process_reduce(message)
         elif (arg[0] == 'replicate'):
             message = message + ',' + arg[1] + " "
-            ports[3].sendall(message)
             print "Sent replicate"
         elif (arg[0] == 'stop'):
             print "Stopping PRM"
@@ -88,7 +91,7 @@ def cli_main():
             print 'Invalid argument!'
         while True:
             try:
-                ports[3].sendall(message)
+                ports[3].sendall(message + " ")
                 break
             except Exception:
                 pass

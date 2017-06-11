@@ -8,7 +8,10 @@
 import sys
 import socket
 import time
+import Queue
+import threading
 
+q = Queue.Queue()
 MYIP = '127.0.0.1'
 LOCALHOST = '127.0.0.1'
 MYID = int(sys.argv[1])
@@ -20,7 +23,7 @@ BALLOTNUM = [0, MYID]
 ACCEPTNUM = [0, 0]
 
 # string (file name to be replicated)
-ACCEPTVAL = None
+ACCEPTVAL = "null"
 
 # string (file name proposed to be replicated)
 PROPOSEDVAL = None
@@ -47,7 +50,7 @@ THELOG = {}
 log_number = 0
 
 # string to socket
-# IP to socket
+# ID to socket
 SOCKDICT = {}
 
 NUMACKS = 0
@@ -69,14 +72,13 @@ def setupPorts():
         addr = (LOCALHOST, int(PORTDICT[siteID]))
         SOCKDICT[siteID] = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         SOCKDICT[siteID].connect(addr)
-
-# STOPPED HERE CHECK FOR HASHING OF SOCKDICT
+        print "Connected to " + siteID
 
 #  messages sent with spaces after each other, ballots separated by commas
 def checkStream():
     global BALLOTNUM, PROPOSEDVAL, NUMACKS, NUMACCEPTS, ISLEADER, ISRUNNING, ACCEPTNUM, ACCEPTVAL
     try:
-        rawData = stream.recv(1024)
+        rawData = q.get()
         print rawData
         splitData = rawData.split()
         for ballot in splitData:
@@ -104,12 +106,13 @@ def checkStream():
                         sendAck(incomingBallot)
                 if "ack" in ballot:
                     # ack,proposedBal.num,proposedBal.ID,acceptBal.num,acceptBal.ID,acceptVal
+                    print "Got ack"
                     NUMACKS = NUMACKS + 1
                     if NUMACKS == 1:
                         incomingBal  = [int(ballotArgs[1]), int(ballotArgs[2])]
                         incomingAcceptBal = [int(ballotArgs[3]), int(ballotArgs[4])]
                         incomingVal = ballotArgs[5]
-                        if (incomingVal or ACCEPTVAL) is None:
+                        if (incomingVal or ACCEPTVAL) is "null":
                             myTempVal = PROPOSEDVAL
                         else:
                             #does this work? only 3 nodes so maybe?
@@ -163,12 +166,16 @@ def sendPrepare():
 def sendAck(ballot):
     # ballotNum, ballotID
     # int, int
-    print "Sent ack"
+    print "In sendAck"
     destination = str(ballot[1])
-    #print PORTDICT[destination]
-    #print type(PORTDICT[destination])
-    SOCKDICT[destination].sendall("ack," + str(ballot[0]) + "," + str(ballot[1]) + "," + str(ACCEPTNUM[0]) + "," + str(ACCEPTNUM[1]) + "," + ACCEPTVAL)
+    message = "ack," + str(ballot[0]) + "," + str(ballot[1]) + "," + str(ACCEPTNUM[0]) + "," + str(ACCEPTNUM[1]) + "," + ACCEPTVAL
+
+    print ballot
+    print destination 
+    SOCKDICT[destination].sendall(message)
+    print message
     print "really sent"
+
 def leaderAccept(tempAcceptVal):
     for sock in SOCKDICT:
         SOCKDICT[sock].sendall("accept," + str(BALLOTNUM[0]) + "," + tempAcceptVal)
@@ -261,16 +268,59 @@ def stringToLog(logString):
             wc = int(line.split('+')[1])
             THELOG[log_number]['words'][word] = wc                      
 
+def thread1():
+    stream1, addr1 = servsock.accept()
+    while True:
+        try:
+            data = stream1.recv(1024)
+            q.put(data)
+        except KeyboardInterrupt:
+            servsock.close()
+
+def thread2():
+    stream2, addr2 = servsock.accept()
+    while True:
+        try: 
+            data = stream2.recv(1024)            
+            q.put(data)
+        except KeyboardInterrupt:
+            servsock.close()
+
+def thread3():
+    stream3, addr3 = servsock.accept()
+    while True:
+        try:
+            data = stream3.recv(1024)
+            q.put(data)
+        except KeyboardInterrupt:
+            servsock.close()
+
 # the main function
 setupConfig()
+print "Config set up"
+
 servsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 servsock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 servsock.bind((LOCALHOST, PORT))
 servsock.listen(10)
-stream, addr = servsock.accept()
+time.sleep(3)
 
-time.sleep(5)
 setupPorts()
+
+t1 = threading.Thread(target = thread1)
+t2 = threading.Thread(target = thread2)
+t3 = threading.Thread(target = thread3)
+
+t1.daemon = True
+t2.daemon = True
+t3.daemon = True
+
+t1.start()
+t2.start()
+t3.start()
+
+print "Ports setup"
+
 # keep while loop running to checkStream()
 try:
     while True:
