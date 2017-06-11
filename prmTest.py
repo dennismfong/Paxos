@@ -13,7 +13,6 @@ MYIP = '127.0.0.1'
 LOCALHOST = '127.0.0.1'
 MYID = int(sys.argv[1])
 PORT = int(sys.argv[3])
-servsock = None
 
 # int, int
 # ballotNumber, aSiteID
@@ -37,6 +36,7 @@ ACKDICT = {}
 IPDICT = {}
 
 # for testing
+# string to string
 # siteID to port
 PORTDICT = {}
 
@@ -60,15 +60,17 @@ def setupConfig():
     with open(sys.argv[2], 'r') as configFile:
         for line in configFile:
             line = line.split()
-            if str(ID) not in line[0]:
+            if str(MYID) not in line[0]:
                 PORTDICT[line[0]] = line[1]
 
 # connect to all other PRMs
 def setupPorts():
     for siteID in PORTDICT:
         addr = (LOCALHOST, int(PORTDICT[siteID]))
-        SOCKDICT[str(PORTDICT[siteID])] = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        SOCKDICT[str(PORTDICT[siteID])].connect(addr)
+        SOCKDICT[siteID] = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        SOCKDICT[siteID].connect(addr)
+
+# STOPPED HERE CHECK FOR HASHING OF SOCKDICT
 
 #  messages sent with spaces after each other, ballots separated by commas
 def checkStream():
@@ -159,11 +161,13 @@ def sendPrepare():
         SOCKDICT[sock].sendall("prepare," + str(BALLOTNUM[0]) + "," + str(BALLOTNUM[1]) + " ")
 
 def sendAck(ballot):
+    # ballotNum, ballotID
+    # int, int
     print "Sent ack"
     destination = str(ballot[1])
-    print PORTDICT[destination]
-    print type(PORTDICT[destination])
-    SOCKDICT[PORTDICT[destination]].sendall("ack," + str(ballot[0]) + "," + str(ballot[1]) + "," + str(ACCEPTNUM[0]) + "," + str(ACCEPTNUM[1]) + "," + ACCEPTVAL)
+    #print PORTDICT[destination]
+    #print type(PORTDICT[destination])
+    SOCKDICT[destination].sendall("ack," + str(ballot[0]) + "," + str(ballot[1]) + "," + str(ACCEPTNUM[0]) + "," + str(ACCEPTNUM[1]) + "," + ACCEPTVAL)
     print "really sent"
 def leaderAccept(tempAcceptVal):
     for sock in SOCKDICT:
