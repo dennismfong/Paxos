@@ -28,12 +28,6 @@ ACCEPTVAL = "null"
 # string (file name proposed to be replicated)
 PROPOSEDVAL = None
 
-# dict for phase 2 to check if already have received accept
-ACCEPTDICT = {}
-
-# dict for phase 2 to check for all vals  = null
-ACKDICT = {}
-
 # string to string
 # siteID to IP
 IPDICT = {}
@@ -53,8 +47,8 @@ log_number = 0
 # ID to socket
 SOCKDICT = {}
 
-NUMACKS = 0
-NUMACCEPTS = 0
+NUMACKS = {}
+NUMACCEPTS = {}
 ISLEADER = 0
 ISRUNNING = 1
 
@@ -94,6 +88,8 @@ def checkStream():
                     PROPOSEDVAL = ballotArgs[1]
                     ISLEADER = 1
                     print "Got replicate"
+                    balKey = ballotArgs[1] + "." + ballotArgs[2]
+                    NUMACKS[balKey] = 0
                     sendPrepare()
                 if "prepare" in ballot:
                     # prepare,ballot.num, ballot.ID
@@ -107,24 +103,26 @@ def checkStream():
                 if "ack" in ballot:
                     # ack,proposedBal.num,proposedBal.ID,acceptBal.num,acceptBal.ID,acceptVal
                     print "Got ack"
-                    NUMACKS = NUMACKS + 1
-                    if NUMACKS == 1:
+                    ackKey = ballotArgs[1] + "." + ballotArgs[2]
+                    NUMACKS[ackKey] += 1
+                    if NUMACKS[ackKey] == 1:
                         incomingBal  = [int(ballotArgs[1]), int(ballotArgs[2])]
                         incomingAcceptBal = [int(ballotArgs[3]), int(ballotArgs[4])]
                         incomingVal = ballotArgs[5]
-                        if (incomingVal or ACCEPTVAL) is "null":
+                        if (incomingVal and ACCEPTVAL) is "null":
                             myTempVal = PROPOSEDVAL
                         else:
                             #does this work? only 3 nodes so maybe?
                             if firstGreater(ACCEPTNUM, incomingAcceptBal):
-                                myTempVal = PROPOSEDVAL
+                                myTempVal = ACCEPTVAL
                             else:
                                 myTempVal = incomingVal
-                        leaderAccept(myTempVal)
+                        leadrAccept(myTempVal, ackKey)
                 if "accept" in ballot:
                     # accept,ballotNum.num,ballotNum.ID,myTempVal
-                    NUMACCEPTS == NUMACCEPTS + 1
-                    if NUMACCEPTS == 1:
+                    acceptKey = ballotArgs[1] + "." + ballotArgs[2]
+                    if NUMACCEPTS[acceptKey] is None:
+                        NUMACCEPTS[acceptKey] = 1 
                         incomingBal = [int(ballotArgs[1]), int(ballotArgs[2])]
                         incomingAcceptVal = ballotArgs[3]
                         if firstGreater(incomingBal, BALLOTNUM):
@@ -132,9 +130,9 @@ def checkStream():
                             ACCEPTNUM[1] = incomingBal[1]
                             ACCEPTVAL = incomingAcceptVal
                             cohortAccept(incomingBal, incomingAcceptVal)
-                        if (ISLEADER):
-                            decide()
                             'decide,makenewlog,words'
+                    elif NUMACCEPTS[acceptKey] == 1:
+                        decide()
                 if "decide" in ballot:
                     # decide,fileNameToReplicate
                     stringToLog(ballotArgs[1])
@@ -169,16 +167,18 @@ def sendAck(ballot):
     print "In sendAck"
     destination = str(ballot[1])
     message = "ack," + str(ballot[0]) + "," + str(ballot[1]) + "," + str(ACCEPTNUM[0]) + "," + str(ACCEPTNUM[1]) + "," + ACCEPTVAL
-
+    
     print ballot
     print destination 
     SOCKDICT[destination].sendall(message)
     print message
     print "really sent"
 
-def leaderAccept(tempAcceptVal):
+def leaderAccept(tempAcceptVal, ackKey):
     for sock in SOCKDICT:
         SOCKDICT[sock].sendall("accept," + str(BALLOTNUM[0]) + "," + tempAcceptVal)
+    NUMACCEPTS[ackKey] = 1
+    
                                
 def cohortAccept(b, v):
     for sock in SOCKDICT:
