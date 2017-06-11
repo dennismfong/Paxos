@@ -19,6 +19,7 @@ PORT = int(sys.argv[3])
 
 # int, int
 # ballotNumber, aSiteID
+LOCALCOUNT = 0
 BALLOTNUM = [0, MYID]
 ACCEPTNUM = [0, 0]
 
@@ -69,7 +70,7 @@ def setupPorts():
 
 #  messages sent with spaces after each other, ballots separated by commas
 def checkStream():
-    global BALLOTNUM, PROPOSEDVAL, NUMACKS, NUMACCEPTS, ISLEADER, ISRUNNING, ACCEPTNUM, ACCEPTVAL
+    global BALLOTNUM, PROPOSEDVAL, NUMACKS, NUMACCEPTS, ISLEADER, ISRUNNING, ACCEPTNUM, ACCEPTVAL, LOCALCOUNT
     try:
         rawData = q.get()
         print rawData
@@ -83,9 +84,9 @@ def checkStream():
             if (ISRUNNING):
                 if "replicate" in ballot:
                     # replicate,fileName
-                    BALLOTNUM[0] = BALLOTNUM[0] + 1
+                    LOCALCOUNT += 1
+                    BALLOTNUM[0] = LOCALCOUNT
                     PROPOSEDVAL = ballotArgs[1]
-                    ISLEADER = 1
                     balKey = str(BALLOTNUM[0]) + "." + str(BALLOTNUM[1])
                     NUMACKS[balKey] = 0
                     LEADERS[balKey] = 1
@@ -138,7 +139,8 @@ def checkStream():
                             if acceptKey in LEADERS:
                                 decide()
                 if "decide" in ballot:
-                    # decide,fileNameToReplicate
+                    # decide,filename/word+wc/word+wc/...
+                    print ballotArgs[1]
                     stringToLog(ballotArgs[1])
                     # replicate from other node
                 if "total" in ballot:
@@ -231,7 +233,6 @@ def print_log():
 def replicate(filename):
 ## placeholders for code referencing ##
     global log_number
-    print "Inside replicate"
     THELOG[log_number] = {}       ##log_number = whichever log the file is stored in order
     THELOG[log_number]['words'] = {}
     THELOG[log_number]['name'] = filename
@@ -248,18 +249,19 @@ def replicate(filename):
                 THELOG[log_number]['words'][word] = wc 
             else:                                       # word does exist, increment it
                 THELOG[log_number]['words'][word] += wc
-    print "Looping"
     words = THELOG[log_number]['words']        
     rep_log = THELOG[log_number]['name'] + '/'
-    print "In 1st loop"
     for word in words:
         rep_log = rep_log + word + '+' + str(words[word]) + '/' 
+    rep_log = rep_log.strip('/')
     for sock in SOCKDICT:
         SOCKDICT[sock].sendall("decide," + rep_log)    
     #send rep_log to other PRMs to replicate
 
     log_number = log_number + 1
-    
+    print "Finish local replicate"
+    reset()
+ 
 def stringToLog(logString):
     words = logString.split('/')
     updatedName = False          #check if log has updated name
@@ -274,6 +276,14 @@ def stringToLog(logString):
             word = line.split('+')[0]
             wc = int(line.split('+')[1])
             THELOG[log_number]['words'][word] = wc                      
+    reset()
+    print "Paxos log done"
+
+def reset():
+    global BALLOTNUM, ACCEPTNUM, ACCEPTVAL
+    BALLOTNUM = [0, MYID]
+    ACCEPTNUM = [0, 0]
+    ACCEPTVAL = "null"
 
 def thread1():
     stream1, addr1 = servsock.accept()
