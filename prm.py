@@ -73,7 +73,8 @@ def checkStream():
     global BALLOTNUM, PROPOSEDVAL, NUMACKS, NUMACCEPTS, ISLEADER, ISRUNNING, ACCEPTNUM, ACCEPTVAL, LOCALCOUNT
     try:
         rawData = q.get()
-        print rawData
+        if ISRUNNING:
+            print rawData
         splitData = rawData.split()
         for ballot in splitData:
             ballotArgs = ballot.split(',')
@@ -102,7 +103,6 @@ def checkStream():
                         sendAck(incomingBallot)
                 if "ack" in ballot:
                     # ack,proposedBal.num,proposedBal.ID,acceptBal.num,acceptBal.ID,acceptVal
-                    print "Got ack"
                     ackKey = ballotArgs[1] + "." + ballotArgs[2]
                     NUMACKS[ackKey] += 1
                     if NUMACKS[ackKey] == 1:
@@ -131,16 +131,21 @@ def checkStream():
                             ACCEPTVAL = incomingAcceptVal
                             cohortAccept(incomingBal, incomingAcceptVal)
                     elif NUMACCEPTS[acceptKey] == 1:
+                        temp = "RECEIVED MAJORITY AS "
                         NUMACCEPTS[acceptKey] += 1
                         if firstGreater(incomingBal, BALLOTNUM):
                             ACCEPTNUM[0] = incomingBal[0]
                             ACCEPTNUM[1] = incomingBal[1]
                             ACCEPTVAL = incomingAcceptVal
                             if acceptKey in LEADERS:
+                                temp += "LEADER"
+                                print temp
                                 decide()
+                            else:
+                                temp += "COHORT"
+                                print temp
                 if "decide" in ballot:
                     # decide,filename/word+wc/word+wc/...
-                    print ballotArgs[1]
                     stringToLog(ballotArgs[1])
                     # replicate from other node
                 if "total" in ballot:
@@ -168,7 +173,6 @@ def firstGreater(ballot1, ballot2):
 def sendPrepare():
     for sock in SOCKDICT:
         SOCKDICT[sock].sendall("prepare," + str(BALLOTNUM[0]) + "," + str(BALLOTNUM[1]) + " ")
-    print "Sent prepare"
 
 def sendAck(ballot):
     # ballotNum, ballotID
@@ -189,7 +193,6 @@ def cohortAccept(b, v):
         SOCKDICT[sock].sendall("accept," + str(b[0]) + "," + str(b[1]) + "," + v)
 
 def decide():
-    print "Received majority, decide()"
     replicate(ACCEPTVAL)
                                
 # PRM FUNCTIONS #
@@ -261,9 +264,8 @@ def replicate(filename):
     for sock in SOCKDICT:
         SOCKDICT[sock].sendall("decide," + rep_log)    
     #send rep_log to other PRMs to replicate
-
+    print "FINISH LOCAL REPLICATE"
     log_number = log_number + 1
-    print "Finish local replicate"
     reset()
  
 def stringToLog(logString):
@@ -281,7 +283,7 @@ def stringToLog(logString):
             wc = int(line.split('+')[1])
             THELOG[log_number]['words'][word] = wc                      
     reset()
-    print "Paxos log done"
+    print "FINISH PAXOS REPLICATE"
 
 def reset():
     global BALLOTNUM, ACCEPTNUM, ACCEPTVAL
@@ -318,7 +320,7 @@ def thread3():
 
 # the main function
 setupConfig()
-print "Config set up"
+print "CONFIG SETUP"
 
 servsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 servsock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -340,7 +342,7 @@ t1.start()
 t2.start()
 t3.start()
 
-print "Ports setup"
+print "PORTS SETUP"
 
 # keep while loop running to checkStream()
 try:
