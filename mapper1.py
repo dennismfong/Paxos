@@ -1,5 +1,7 @@
 #MAPPER 1 (ports[0])
 
+import socket
+
 file_tag = '_I_1.txt'
 LOCALHOST = '127.0.0.1'
 PORT = int(sys.argv[1])
@@ -12,14 +14,14 @@ stream, addr = servsock.accept()
 mapper1()
 
 def mapper1():
-    while True
+    while True:
         try:
             data = stream.recv(1024)
             streamData = data.split()
             for mapData in streamData:
                 mapArgs = mapData.split(',')
                 f = open(mapArgs[1], 'r') #FILENAME
-                f2 = open(mapArgs[1][:-4] + file_tag, 'r+') #NEW FILE
+                f2 = open(mapArgs[1][:-4] + file_tag, 'w+') #NEW FILE
                 f.seek(int(mapArgs[2]))
                 temp = f.read(int(mapArgs[3]) - int(mapArgs[2]))
                 words = temp.split()
@@ -33,10 +35,10 @@ def mapper1():
                     f2.write(word + ' ' + str(w_dict[word]) + '\n')
                 f2.close()
                 f.close()
+            break
         except KeyboardInterrupt:
-            break;
+            break
 
-finally:
-    servsock.close()
+mapper1()
 
     
