@@ -49,7 +49,7 @@ SOCKDICT = {}
 
 NUMACKS = {}
 NUMACCEPTS = {}
-ISLEADER = 0
+LEADERS = {}
 ISRUNNING = 1
 
 # update the LISTOFIPS dict from config file and MYIP
@@ -88,6 +88,7 @@ def checkStream():
                     ISLEADER = 1
                     balKey = str(BALLOTNUM[0]) + "." + str(BALLOTNUM[1])
                     NUMACKS[balKey] = 0
+                    LEADERS[balKey] = 1
                     sendPrepare()
                 if "prepare" in ballot:
                     # prepare,ballot.num, ballot.ID
@@ -134,7 +135,8 @@ def checkStream():
                             ACCEPTNUM[0] = incomingBal[0]
                             ACCEPTNUM[1] = incomingBal[1]
                             ACCEPTVAL = incomingAcceptVal
-                            decide()
+                            if acceptKey in LEADERS:
+                                decide()
                 if "decide" in ballot:
                     # decide,fileNameToReplicate
                     stringToLog(ballotArgs[1])
@@ -242,20 +244,21 @@ def replicate(filename):
         else:
             word = line.split()[0]      #word
             wc = int(line.split()[1])   #word count
-            if word in THELOG[filename]['words']:     #word already exists in logged dict
-                THELOG[log_number]['words'][word] = THELOG[filename]['words'][word] + wc 
-            else:                                       #word doens't exist, add it
-                THELOG[log_number]['words'][word] = wc
+            if word not in THELOG[log_number]['words']:     # word doesn't exist
+                THELOG[log_number]['words'][word] = wc 
+            else:                                       # word does exist, increment it
+                THELOG[log_number]['words'][word] += wc
+    print "Looping"
     words = THELOG[log_number]['words']        
     rep_log = THELOG[log_number]['name'] + '/'
+    print "In 1st loop"
     for word in words:
-        rep_log = rep_log + word + '+' + words[word] + '/' 
+        rep_log = rep_log + word + '+' + str(words[word]) + '/' 
     for sock in SOCKDICT:
         SOCKDICT[sock].sendall("decide," + rep_log)    
     #send rep_log to other PRMs to replicate
 
     log_number = log_number + 1
-    print "End of replicate"
     
 def stringToLog(logString):
     words = logString.split('/')
