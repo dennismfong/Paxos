@@ -1,6 +1,4 @@
 #!/bin/bash
 
-rm file1_I_*
-rm file2_I_*
-rm file3_I_*
+rm _I_*
 rm *reduced.txt

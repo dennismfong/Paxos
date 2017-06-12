@@ -26,7 +26,7 @@ def parse():
     with open(sys.argv[2], 'r') as configFile:
         for line in configFile:
             line = line.split()
-            if str(MYID) in line[0]:
+            if str(SITEID) in line[0]:
                 PRMIP = line[1]
 
 def setup():
@@ -136,6 +136,7 @@ def cli_main():
             except Exception:
                 pass
 
+parse()
 setup()
 print "Done with setup"
 cli_main()
