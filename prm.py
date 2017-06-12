@@ -178,19 +178,19 @@ def sendAck(ballot):
     # ballotNum, ballotID
     # int, int
     destination = str(ballot[1])
-    message = "ack," + str(ballot[0]) + "," + str(ballot[1]) + "," + str(ACCEPTNUM[0]) + "," + str(ACCEPTNUM[1]) + "," + ACCEPTVAL
+    message = "ack," + str(ballot[0]) + "," + str(ballot[1]) + "," + str(ACCEPTNUM[0]) + "," + str(ACCEPTNUM[1]) + "," + ACCEPTVAL + " "
     
     SOCKDICT[destination].sendall(message)
 
 def leaderAccept(tempAcceptVal, ackKey):
     for sock in SOCKDICT:
-        SOCKDICT[sock].sendall("accept," + str(BALLOTNUM[0]) + "," + str(BALLOTNUM[1]) + "," + tempAcceptVal)
+        SOCKDICT[sock].sendall("accept," + str(BALLOTNUM[0]) + "," + str(BALLOTNUM[1]) + "," + tempAcceptVal + " ")
     NUMACCEPTS[ackKey] = 1
     
                                
 def cohortAccept(b, v):
     for sock in SOCKDICT:
-        SOCKDICT[sock].sendall("accept," + str(b[0]) + "," + str(b[1]) + "," + v)
+        SOCKDICT[sock].sendall("accept," + str(b[0]) + "," + str(b[1]) + "," + v + " ")
 
 def decide():
     replicate(ACCEPTVAL)
@@ -262,7 +262,7 @@ def replicate(filename):
         rep_log = rep_log + word + '+' + str(words[word]) + '/' 
     rep_log = rep_log.strip('/')
     for sock in SOCKDICT:
-        SOCKDICT[sock].sendall("decide," + rep_log)    
+        SOCKDICT[sock].sendall("decide," + rep_log + " ")    
     #send rep_log to other PRMs to replicate
     print "FINISH LOCAL REPLICATE"
     log_number = log_number + 1
