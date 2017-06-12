@@ -281,6 +281,12 @@ def sendLog(ID, logNum):
         SOCKDICT[str(ID)].sendall(message + " ")
 
 def replicate(filename):
+    try:
+        readfile = open(filename, 'r')
+    except Exception:
+        print "File does not exist, replicate stopping"
+        return
+
 ## placeholders for code referencing ##
     global log_number
     THELOG[log_number] = {}       ##log_number = whichever log the file is stored in order
@@ -288,7 +294,6 @@ def replicate(filename):
     THELOG[log_number]['name'] = filename
 ## end of placeholders ##  
 
-    readfile = open(filename, 'r')
     for line in readfile:
         if (len(line.split()) != 2):
             pass
