@@ -8,6 +8,8 @@ import socket
 import sys
 
 MYID = '0.0.0.0'
+SITEID = sys.argv[1]
+PRMIP = '127.0.0.1'
 
 ports = [None] * 4
 
@@ -18,6 +20,14 @@ for i in range(4):
     ##ports[0] = reducer
     ##ports[1] = prm/replicator
 port_nums = [5001, 5002, 5003, 5004]
+
+def parse():
+    global SITEID, PRMIP
+    with open(sys.argv[2], 'r') as configFile:
+        for line in configFile:
+            line = line.split()
+            if str(MYID) in line[0]:
+                PRMIP = line[1]
 
 def setup():
     while True: #mapper1
@@ -40,7 +50,7 @@ def setup():
            pass
     while True: #prm
         try:
-            ports[3].connect((MYID, 5004))
+            ports[3].connect((PRMIP, 5004))
             break
         except Exception:
             pass
