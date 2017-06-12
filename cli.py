@@ -6,6 +6,7 @@
 
 import socket
 import sys
+import os
 
 MYID = '0.0.0.0'
 SITEID = sys.argv[1]
@@ -65,16 +66,12 @@ def cli_main():
         if (arg[0] == 'map'):
             message = message + ',' +  arg[1]
             f = open(arg[1], 'r')
-	    i = 0 
-            for i, l in enumerate(f):
-		i += 1
-            f_size = i + 1
-            print f_size
+	    f_size = (os.stat(arg[1]).st_size)
             f_split = f_size/2
-            f.seek(f_split)
-            while True: 
+	    f.seek(f_split)
+	    while True: 
                 if(f.read(1) == " "):
-                    message1 = message + ',0,' + str(f_split)
+                    message1 = message + ',0,' + str(f_split) + ' '
                     message2 = message + ',' + str(f_split) + ',' + str(f_size) + ' ' 
                     while True:
                         try:    #SEND TO LOCAL MAPPERS

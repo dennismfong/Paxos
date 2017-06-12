@@ -20,6 +20,7 @@ def mapper1():
         try:
             print "Waiting for file to map"
             data = stream.recv(BUFFERSIZE)
+	    print data
             streamData = data.split()
 #            streamData = ['map,file1.txt,0,200','map,file2.txt,0,200']
             for mapData in streamData:
