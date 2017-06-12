@@ -84,11 +84,9 @@ def checkStream():
         for ballot in splitData:
             ballotArgs = ballot.split(',')
             if "stop" in ballot:
-                print "Log number at stop: " + str(log_number)
                 ISRUNNING = 0
             if "resume" in ballot:
                 ISRUNNING = 1
-                print "Log number at resume: " + str(log_number)
                 sendRecover(MYID, log_number)
             if (ISRUNNING):
                 if "replicate" in ballot:
@@ -247,7 +245,6 @@ def merge(pos1, pos2):
 
 def total(args):
     arglist = args.split(",")
-    print arglist
     total_count = 0
     itera = -1
     pos_dicts = {}
@@ -268,14 +265,13 @@ def print_log():
 def sendLog(ID, logNum):
     global log_number
     for i in range(logNum, log_number):
-        print "Current iteration of i " + str(i)
         message = "log," + THELOG[i]['name'] + "/"
         for keyPair in THELOG[i]['words']:
             addStuff = keyPair + "+" + str(THELOG[i]['words'][keyPair]) + '/'
             message += addStuff
         message = message.rstrip('/')
         SOCKDICT[str(ID)].sendall(message + " ")
-        print "Sent message for index " + str(i)
+
 def replicate(filename):
 ## placeholders for code referencing ##
     global log_number
