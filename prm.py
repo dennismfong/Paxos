@@ -71,7 +71,12 @@ def setupPorts():
     for siteID in PORTDICT:
         addr = ((PORTDICT[siteID], PORT))
         SOCKDICT[siteID] = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        SOCKDICT[siteID].connect(addr)
+        while True:
+            try:
+                SOCKDICT[siteID].connect(addr)
+                break
+            except Exception:
+                pass
 
 #  messages sent with spaces after each other, ballots separated by commas
 def checkStream():
