@@ -48,6 +48,11 @@ log_number = 0
 # ID to socket
 SOCKDICT = {}
 
+
+# string to string
+# log_num to "1"
+RECOVERDICT = {}
+
 NUMACKS = {}
 NUMACCEPTS = {}
 LEADERS = {}
@@ -79,9 +84,11 @@ def checkStream():
         for ballot in splitData:
             ballotArgs = ballot.split(',')
             if "stop" in ballot:
+                print "Log number at stop: " + str(log_number)
                 ISRUNNING = 0
             if "resume" in ballot:
                 ISRUNNING = 1
+                print "Log number at resume: " + str(log_number)
                 sendRecover(MYID, log_number)
             if (ISRUNNING):
                 if "replicate" in ballot:
@@ -164,9 +171,13 @@ def checkStream():
                         #only send what log numbers they dont have
                         sendLog(recoverID, recoverNum)
                 if "log" in ballot:
+                    tempSplit = ballotArgs[1].split('/')
+                    logFile = tempSplit[0]
+                    if logFile not in RECOVERDICT:
                     #log,filename/word+wc/word+wc/...                        
-                    stringToLog(ballotArgs[1]) 
-                    print "COPIED LOG FROM FAILURE"
+                        stringToLog(ballotArgs[1]) 
+                        RECOVERDICT[logFile] = "1"
+                        print "COPIED LOG FROM FAILURE"
     except Exception,e:
         print str(e)
             
@@ -187,7 +198,6 @@ def sendRecover(ID, logNum):
     message = "recover," + str(ID) + "," + str(logNum) + " "
     for sock in SOCKDICT:
         SOCKDICT[sock].sendall(message)
-    print "Sent reccover"
 
 def sendPrepare():
     for sock in SOCKDICT:
@@ -257,15 +267,15 @@ def print_log():
 
 def sendLog(ID, logNum):
     global log_number
-    numIndices = log_number - logNum
-    for i in range(logNum, logNum + numIndices):
-        message = "log," + THELOG[logNum]['name'] + "/"
+    for i in range(logNum, log_number):
+        print "Current iteration of i " + str(i)
+        message = "log," + THELOG[i]['name'] + "/"
         for keyPair in THELOG[i]['words']:
             addStuff = keyPair + "+" + str(THELOG[i]['words'][keyPair]) + '/'
             message += addStuff
+        message = message.rstrip('/')
         SOCKDICT[str(ID)].sendall(message + " ")
-    print "Sent log over"
-
+        print "Sent message for index " + str(i)
 def replicate(filename):
 ## placeholders for code referencing ##
     global log_number
@@ -293,10 +303,12 @@ def replicate(filename):
     for sock in SOCKDICT:
         SOCKDICT[sock].sendall("decide," + rep_log + " ")    
     #send rep_log to other PRMs to replicate
-    log_number = log_number + 1
+    log_number += 1
+    print "LOCAL REPLICATE COMPLETE"
     reset()
 
 def stringToLog(logString):
+    global log_number
     words = logString.split('/')
     updatedName = False          #check if log has updated name
     if log_number not in THELOG:
@@ -310,6 +322,8 @@ def stringToLog(logString):
             word = line.split('+')[0]
             wc = int(line.split('+')[1])
             THELOG[log_number]['words'][word] = wc                      
+
+    log_number += 1
 
 def reset():
     global BALLOTNUM, ACCEPTNUM, ACCEPTVAL
