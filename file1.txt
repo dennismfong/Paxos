@@ -1,1 +1,1 @@
-This is a test file for seeing if I can split and read. Also. we. are. testing. periods
+This is the first test file and we are trying to see the word count so I will repeat words words words word count trying test apple
