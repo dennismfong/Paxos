@@ -12,7 +12,7 @@ import Queue
 import threading
 
 q = Queue.Queue()
-LOCALHOST = '127.0.0.1'
+LOCALHOST = '0.0.0.0'
 MYID = int(sys.argv[1])
 PORT = 5004
 
@@ -60,11 +60,14 @@ BUFFERSIZE = 12288
 
 # update the LISTOFIPS dict from config file
 def setupConfig():
+    global LOCALHOST
     with open(sys.argv[2], 'r') as configFile:
         for line in configFile:
             line = line.split()
             if str(MYID) not in line[0]:
                 PORTDICT[line[0]] = line[1]
+	    else:
+		LOCALHOST = line[1]
 
 # connect to all other PRMs
 def setupPorts():

@@ -7,7 +7,7 @@
 import socket
 import sys
 
-MYID = '127.0.0.1'
+MYID = '0.0.0.0'
 
 ports = [None] * 4
 
@@ -18,8 +18,6 @@ for i in range(4):
     ##ports[0] = reducer
     ##ports[1] = prm/replicator
 port_nums = [5001, 5002, 5003, 5004]
-port_nums[3] = int(sys.argv[1])
-
 def setup():
     while True: #mapper1
         try:
