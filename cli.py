@@ -41,7 +41,7 @@ def setup():
            pass
     while True: #prm
         try:
-            ports[3].connect((MYID, port_nums[3]))
+            ports[3].connect((MYID, 5004))
             break
         except Exception:
             pass

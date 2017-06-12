@@ -6,6 +6,7 @@ file_tag = '_I_1.txt'
 LOCALHOST = '127.0.0.1'
 #PORT = int(sys.argv[1])
 PORT = 5001
+BUFFERSIZE = 12288
 
 servsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 servsock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -14,11 +15,11 @@ servsock.listen(1)
 stream, addr = servsock.accept()
 
 def mapper1():
-    global stream
+    global stream, BUFFERSIZE
     while True:
         try:
             print "Waiting for file to map"
-            data = stream.recv(1024)
+            data = stream.recv(BUFFERSIZE)
             print data
             streamData = data.split()
             for mapData in streamData:

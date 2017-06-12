@@ -6,6 +6,7 @@ file_tag = '_reduced.txt'
 LOCALHOST = '127.0.0.1'
 ##PORT = int(sys.argv[1])
 PORT = 5003
+BUFFERSIZE = 12288
 
 servsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 servsock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -14,10 +15,11 @@ servsock.listen(1)
 stream, addr = servsock.accept()
 
 def reducer():
+    global BUFFERSIZE
     while True:
         try:
             print "Waiting for stuff to reduce"
-            data = stream.recv(1024)
+            data = stream.recv(BUFFERSIZE)
             streamData = data.split()
 #            streamData = ['file1_I_2.txt,file2_I_2.txt']
             

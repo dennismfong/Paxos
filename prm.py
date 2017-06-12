@@ -3,7 +3,7 @@
 # 8234338, 8334492
 # 22 May 2017
 
-# ./prmTest siteID fileOfIPs port
+# ./prmTest siteID fileOfIPs
 
 import sys
 import socket
@@ -12,10 +12,9 @@ import Queue
 import threading
 
 q = Queue.Queue()
-MYIP = '127.0.0.1'
 LOCALHOST = '127.0.0.1'
 MYID = int(sys.argv[1])
-PORT = int(sys.argv[3])
+PORT = 5004
 
 # int, int
 # ballotNumber, aSiteID
@@ -35,7 +34,7 @@ IPDICT = {}
 
 # for testing
 # string to string
-# siteID to port
+# siteID to IP
 PORTDICT = {}
 
 # the nested 3d dictionary
@@ -57,8 +56,9 @@ NUMACKS = {}
 NUMACCEPTS = {}
 LEADERS = {}
 ISRUNNING = 1
+BUFFERSIZE = 12288
 
-# update the LISTOFIPS dict from config file and MYIP
+# update the LISTOFIPS dict from config file
 def setupConfig():
     with open(sys.argv[2], 'r') as configFile:
         for line in configFile:
@@ -69,7 +69,7 @@ def setupConfig():
 # connect to all other PRMs
 def setupPorts():
     for siteID in PORTDICT:
-        addr = (LOCALHOST, int(PORTDICT[siteID]))
+        addr = ((PORTDICT[siteID], PORT))
         SOCKDICT[siteID] = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         SOCKDICT[siteID].connect(addr)
 
@@ -328,28 +328,31 @@ def reset():
     ACCEPTVAL = "null"
 
 def thread1():
+    global BUFFERSIZE
     stream1, addr1 = servsock.accept()
     while True:
         try:
-            data = stream1.recv(1024)
+            data = stream1.recv(BUFFERSIZE)
             q.put(data)
         except KeyboardInterrupt:
             servsock.close()
 
 def thread2():
+    global BUFFERSIZE
     stream2, addr2 = servsock.accept()
     while True:
         try: 
-            data = stream2.recv(1024)            
+            data = stream2.recv(BUFFERSIZE)            
             q.put(data)
         except KeyboardInterrupt:
             servsock.close()
 
 def thread3():
+    global BUFFERSIZE
     stream3, addr3 = servsock.accept()
     while True:
         try:
-            data = stream3.recv(1024)
+            data = stream3.recv(BUFFERSIZE)
             q.put(data)
         except KeyboardInterrupt:
             servsock.close()
