@@ -10,6 +10,7 @@ import sys
 MYID = '127.0.0.1'
 
 ports = [None] * 4
+
 for i in range(4):
     ports[i] = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     ##ports[0] = map1
@@ -44,7 +45,7 @@ def setup():
             break
         except Exception:
             pass
-
+            
 def cli_main():
     while True:
         command = raw_input("Enter command: \n")
