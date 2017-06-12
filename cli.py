@@ -64,9 +64,10 @@ def cli_main():
         message = arg[0] 
         if (arg[0] == 'map'):
             message = message + ',' +  arg[1]
-            f = open(arg[1], 'r') 
+            f = open(arg[1], 'r')
+	    i = 0 
             for i, l in enumerate(f):
-                pass
+		i += 1
             f_size = i + 1
             print f_size
             f_split = f_size/2
