@@ -70,7 +70,7 @@ def setupPorts():
 
 #  messages sent with spaces after each other, ballots separated by commas
 def checkStream():
-    global BALLOTNUM, PROPOSEDVAL, NUMACKS, NUMACCEPTS, ISLEADER, ISRUNNING, ACCEPTNUM, ACCEPTVAL, LOCALCOUNT
+    global BALLOTNUM, PROPOSEDVAL, NUMACKS, NUMACCEPTS, ISLEADER, ISRUNNING, ACCEPTNUM, ACCEPTVAL, LOCALCOUNT, log_number, MYID
     try:
         rawData = q.get()
         if ISRUNNING:
@@ -82,6 +82,7 @@ def checkStream():
                 ISRUNNING = 0
             if "resume" in ballot:
                 ISRUNNING = 1
+                sendRecover(MYID, log_number)
             if (ISRUNNING):
                 if "replicate" in ballot:
                     # replicate,fileName
@@ -147,13 +148,25 @@ def checkStream():
                 if "decide" in ballot:
                     # decide,filename/word+wc/word+wc/...
                     stringToLog(ballotArgs[1])
-                    # replicate from other node
+                    print "FINISH PAXOS REPLICATE"
+                    reset()
                 if "total" in ballot:
                     total(ballot)
                 if "print" in ballot:
                     print_log()
                 if "merge" in ballot:
                     merge(ballotArgs[1], ballotArgs[2])
+                if "recover" in ballot:
+                    #recover,siteID,logNum
+                    recoverID = ballotArgs[1]
+                    recoverNum = int(ballotArgs[2])
+                    if recoverNum < log_number:
+                        #only send what log numbers they dont have
+                        sendLog(recoverID, recoverNum)
+                if "log" in ballot:
+                    #log,filename/word+wc/word+wc/...                        
+                    stringToLog(ballotArgs[1]) 
+                    print "COPIED LOG FROM FAILURE"
     except Exception,e:
         print str(e)
             
@@ -169,6 +182,12 @@ def firstGreater(ballot1, ballot2):
             return False
     else:
         return False
+
+def sendRecover(ID, logNum):
+    message = "recover," + str(ID) + "," + str(logNum) + " "
+    for sock in SOCKDICT:
+        SOCKDICT[sock].sendall(message)
+    print "Sent reccover"
 
 def sendPrepare():
     for sock in SOCKDICT:
@@ -236,6 +255,16 @@ def print_log():
     for index in THELOG:
         print THELOG[index]['name']
 
+def sendLog(ID, logNum):
+    global log_number
+    numIndices = log_number - logNum
+    for i in range(logNum, logNum + numIndices):
+        message = "log," + THELOG[logNum]['name'] + "/"
+        for keyPair in THELOG[i]['words']:
+            addStuff = keyPair + "+" + str(THELOG[i]['words'][keyPair]) + '/'
+            message += addStuff
+        SOCKDICT[str(ID)].sendall(message + " ")
+    print "Sent log over"
 
 def replicate(filename):
 ## placeholders for code referencing ##
@@ -243,7 +272,7 @@ def replicate(filename):
     THELOG[log_number] = {}       ##log_number = whichever log the file is stored in order
     THELOG[log_number]['words'] = {}
     THELOG[log_number]['name'] = filename
-## end of placeholders ##
+## end of placeholders ##  
 
     readfile = open(filename, 'r')
     for line in readfile:
@@ -264,10 +293,9 @@ def replicate(filename):
     for sock in SOCKDICT:
         SOCKDICT[sock].sendall("decide," + rep_log + " ")    
     #send rep_log to other PRMs to replicate
-    print "FINISH LOCAL REPLICATE"
     log_number = log_number + 1
     reset()
- 
+
 def stringToLog(logString):
     words = logString.split('/')
     updatedName = False          #check if log has updated name
@@ -282,8 +310,6 @@ def stringToLog(logString):
             word = line.split('+')[0]
             wc = int(line.split('+')[1])
             THELOG[log_number]['words'][word] = wc                      
-    reset()
-    print "FINISH PAXOS REPLICATE"
 
 def reset():
     global BALLOTNUM, ACCEPTNUM, ACCEPTVAL
